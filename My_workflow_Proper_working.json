@@ -1,0 +1,163 @@
+{
+  "name": "My workflow Proper working",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-ai",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        300,
+        20
+      ],
+      "id": "6d875242-eaaf-40c7-a612-484a729ea00e",
+      "name": "Webhook",
+      "webhookId": "70439df9-0371-4062-aa63-510e39d2b809"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract Reply  – fixed\nlet reply =\n  ($json.text || '')                       // LangChain’s default key\n    .replace(/<think>[\\s\\S]*?<\\/think>/gi, '')   // strip <think> … </think>\n    .trim();\n\n// Fallback if the field is empty (rare)\nif (!reply) {\n  reply = \"AI did not reply.\";\n}\n\nreturn [{\n  json: { reply }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1116,
+        20
+      ],
+      "id": "a580a85a-a429-49d2-9c99-99106d9e1be1",
+      "name": "Extract Reply"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1336,
+        20
+      ],
+      "id": "eeaf37c1-cafb-41dc-bb24-e0c1174036d4",
+      "name": "Send Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    chatInput: $json.body?.message ?? ''\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        20
+      ],
+      "id": "608dfc06-f1dd-4f25-a17d-a3942e3de78e",
+      "name": "Prepare Prompt"
+    },
+    {
+      "parameters": {
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        740,
+        20
+      ],
+      "id": "169b7f38-edda-40d5-ad99-041e806dc3ee",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-1.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        828,
+        240
+      ],
+      "id": "aba6da85-cde3-4a90-a0c3-9d603db7dcdd",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "jOcYHxcRRJX8ILX9",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Reply": {
+      "main": [
+        [
+          {
+            "node": "Send Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Prompt": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Extract Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3e122c41-eecc-4c76-8c7e-f93e670d12c1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9fe465b56955259f6690d076526508726ee875611d1f041c59e945e3cd248de2"
+  },
+  "id": "5hVSjnd9kwr9PU5J",
+  "tags": []
+}
